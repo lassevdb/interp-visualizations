@@ -1,0 +1,232 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reproduction: Toy Models of Superposition</title>
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <!-- <div class="logo" aria-hidden="true"></div> -->
+        <div class="brand-text">
+          <div class="brand-title">Lasse van den Berg</div>
+          <div class="brand-subtitle">Readings and reproductions in Mechanistic Interpretability</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="#post">Post</a>
+        <a href="#figures">Figures</a>
+        <a href="#references">References</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="container">
+    <article id="post" class="post">
+      <header class="post-header">
+        <div class="kicker">REPRODUCTION · VISUALIZATION</div>
+        <h1>Reproduction: Toy Models of Superposition</h1>
+
+        <p class="lede">
+          In this note, I reproduce some the results of toy models of superposition by Elhage et al. (2022).
+          My goal is to better understand superposition conceptually and to practice visualizing the results of their work.
+        </p>
+      </header>
+
+      <section class="section">
+        <h2>What is superposition?</h2>
+        <p>
+            Transformer models essentially map a sequence of discrete tokens to a logit vector over the model's discrete vocabulary. However, the discrete input sequence is transformed into a sequence of continuous vectors through the embedding matrix. During inference, these dense vectors are manipulated and transformed in embedding space until the unembedding matrix transforms the last layer's activations back into vocabulary space. For this reason, most information processing in a transformer occurs on  continuous vectors. Unfortunately, individual components (or neurons) of these dense vectors do not map to interpretable meanings in practice. 
+            If one views the residual stream as an information channel, one could imagine that certain concepts or 'features' are represented by one of the components of the residual stream's activation vector each. For some activation vector \(v\in\mathbb{R}^n\), this would provide an \(n\)-dimensional orthogonal basis to encode information. An orthogonal basis is desirable, since it means that different 'features' can be encoded independently from each other. 
+            This view on activation vectors has two core problems that motivate the Superposition Hypothesis:
+            <br>
+            <ul>
+                <li>Individual vector components (i.e. the vector's individual indeces) do not (or very rarely) map to some interpretable feature in practice</li>
+                <li>Transformer models are behaviorally capable of representing much more features than their residual stream has orthogonal bases</li>
+            </ul>
+            <br>
+            The solution to these problems is 'superposition'. Features could be embedded in almost-orthogonal bases in the dense activation vector. But why? A corollary from the <a href="https://en.wikipedia.org/wiki/Johnson–Lindenstrauss_lemma">Johnson-Lindenstrauss lemma</a> states that the number of representable almost-orthogonal vectors scales exponentially with the size of the vector space.
+            This is a very powerful statement, since it gives a mathematical account for how a transformer model could in theory represent exponentially more features than its residual stream has activations.
+            An important caveat is interference. Since features are represented almost-orthogonally, they are no longer independent. One feature's representation can 'leak' into another's.
+            In practice, however, a language model does not represent all features its capable of at once. Features or concepts occur sparsely. The toy model approach shows that sparsity constraints (how likely is some feature to occur) are what determines if superposition can occur.
+        </p>
+
+      </section>
+
+      <section class="section">
+        <h2>The Toy Model</h2>
+
+        <p>The toy model is a simple autoencoder. The encoder and decoder are paremtrized jointly by a single encoder matrix. Mathematically, it can be expressed as: $$h = Wx \quad \text{and} \quad \hat{x} = \text{ReLU}(W^Th + b)$$ where \(h\) is the hidden representation in a lower dimensional space.
+            Or equivalently:
+            $$\hat{x} = \text{ReLU}(W^TWx + b)$$
+        </p>
+
+        <pre class="code">
+<code>class Encoder(nn.Module):
+    def __init__(self, d_in, d_hidden):
+        super().__init__()
+        
+        self.W_enc = nn.Parameter(torch.randn(d_hidden, d_in))
+        self.b = nn.Parameter(torch.randn(d_in))
+        self.relu = nn.ReLU()
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        
+        hidden = einops.einsum(
+            self.W_enc, inputs,
+            'd_h d_in, ... d_in -> ... d_h'
+        )
+        out = einops.einsum(
+            self.W_enc.T, hidden,
+            'd_in d_h, ... d_h -> ... d_in'  
+        ) + self.b
+        
+        return self.relu(out), hidden</code></pre>
+      </section>
+
+      <section class="section">
+        <h2>Encoder Training</h2>
+
+        <p>The encoder is trained on batches of discrete feauture inputs <code>[batch, n_feats]</code>.
+        </p>
+        <ul>
+          <li>Each feature is 1 with a probability of \(1 - sparsity\)</li>
+          <li>Loss is calculated for each feature individually and scaled by each feature's individual importance (1 for all by default)</li>
+        </ul>
+        <p>
+            Initially, I assign the same importance score of 1 to each feature. I train the encoders on 25,000 epochs with a MSE Loss objective.
+        </p>
+      </section>
+
+      <section id="figures" class="section">
+        <h2>Encoder training with low sparsity</h2>
+        <p>
+          For an initial training run, I set sparsity to 0.1. This means that any given feature is active in the input 90% of the time. The superposition hypothesis predicts that it should be difficult for superposition to arise in this setting.
+        The interactive plot below shows the randomly initialized encoder columns. To see how these change over training, you can press the play button or slide manually on the scale below. The plot on the right shows loss per feature. To get a more fine-grained view of the loss, you can drag over a rectangular portion of the loss plot to rescale the axes to to that rectangle.
+        </p>
+
+        <div class="embed-card">
+          <div class="embed-top">
+            <div class="embed-title">Columns of <code>W_enc</code> and loss per feature during training</div>
+          </div>
+
+          <iframe
+            title="Interactive figure placeholder"
+            class="embed-frame"
+            src="plots/5-2-low-sparsity.html"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            scrolling="no"
+          ></iframe>
+        </div>
+
+        <figure class="figure">
+          <figcaption>
+            <strong style="margin-right: 20px;">Figure 1</strong> As we can see, the model selects two features to represent orthogonally in its 2-dimensional embedding space. The other features are collapsed into the nullspace of the embedding matrix and simply not represented.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="figures" class="section">
+        <h2>Example of Superposition Failure</h2>
+        <p>
+          For this training run, the encoder again needs to represent 5 features in 2-dimensional space. It succeeds in representing 4 features, while one is ultimately collapsed into the nullspace of the encoder matrix.
+        </p>
+
+        <div class="embed-card">
+          <div class="embed-top">
+            <div class="embed-title">Columns of <code>W_enc</code> and loss per feature during training</div>
+          </div>
+
+          <iframe
+            title="Interactive figure placeholder"
+            class="embed-frame"
+            src="plots/5-2-4-orth.html"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            scrolling="no"
+          ></iframe>
+        </div>
+
+        <figure class="figure">
+          <figcaption>
+            <strong style="margin-right: 20px;">Figure 2</strong> In this example, the encoder fails to learn a non-orthogonal basis for the features' embeddings. The purple feature's representation is ultimatelty collapsed to the zero vector.
+          </figcaption>
+        </figure>
+      </section>
+
+
+      <section class="section">
+        <h2>Example of Superposition Success</h2>
+        <p>
+          For this training run, I increase sparsity to 0.99. I also train for 50,000 epochs.
+        </p>
+
+        <div class="embed-card">
+          <div class="embed-top">
+            <div class="embed-title">Columns of <code>W_enc</code> and loss per feature during training</div>
+          </div>
+
+          <iframe
+            title="Interactive figure placeholder"
+            class="embed-frame"
+            src="plots/5-2-5-star.html"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            scrolling="no"
+          ></iframe>
+        </div>
+
+        <figure class="figure">
+          <figcaption>
+            <strong style="margin-right: 20px;">Figure 3</strong> In this example, the encoder succeeds in representing 5 features in a two-dimensional embedding space. During the training process, the green feature initially has a higher loss than the other features. It is is forced into the nullspace of the embedding matrix, similar to the previous example. As its embedding 'forces' itself between two of the other embeddings, superpositions arises and it eventually converges to a lower loss.
+          </figcaption>
+        </figure>
+      </section>
+
+
+      <section id="references" class="section">
+        <h2>References</h2>
+        <ol class="refs">
+          <li><a href="https://transformer-circuits.pub/2022/toy_model/index.html">Elhage, et al., "Toy Models of Superposition", Transformer Circuits Thread, 2022.</a></li>
+        </ol>
+      </section>
+
+      <!-- <footer class="post-footer">
+        <div class="hr" aria-hidden="true"></div>
+        <p class="muted">
+          Footer placeholder: contact, links, disclosure, or repo link.
+        </p>
+      </footer> -->
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <!-- <span class="muted">© <span id="year"></span> Placeholder Name</span>
+      <span class="muted">Static HTML/CSS · GitHub Pages-ready</span> -->
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"
+          onload="renderMathInElement(document.body);"></script>
+</body>
+</html>
