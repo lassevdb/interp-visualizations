@@ -198,6 +198,35 @@
       </section>
 
 
+      <section class="section">
+        <h2>Adding more dimensions</h2>
+        <p>
+        Since expressive capacity scales exponentially with the size of the activation space, we can increase the size of hidden dimension to 3. The plot for these three dimensional space become more difficult to visualize. You can hover over a vector to better understand its position in activation space. You can also rotate the activation space by dragging the plot.
+        </p>
+
+        <div class="embed-card">
+          <div class="embed-top">
+            <div class="embed-title">Columns of <code>W_enc</code> and loss per feature during training</div>
+          </div>
+
+          <iframe
+            title="Interactive figure placeholder"
+            class="embed-frame"
+            src="plots/12-3-low-sparsity.html"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            scrolling="no"
+          ></iframe>
+        </div>
+
+        <figure class="figure">
+          <figcaption>
+            <strong style="margin-right: 20px;">Figure 4</strong> The encoder now places 10 features in superposition. Only two features are ultimately collapsed. When rotating the activation space, we can see that all of the represented features have maximum distance from each other.
+          </figcaption>
+        </figure>
+      </section>
+
+
       <section id="references" class="section">
         <h2>References</h2>
         <ol class="refs">
