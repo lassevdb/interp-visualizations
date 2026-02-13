@@ -1,25 +1,19 @@
 /* styles.css */
 :root{
-    /* Bright, modern, low-contrast neutrals */
     --bg: #fbfbfd;
     --panel: rgba(255,255,255,.78);
     --panel-strong: #ffffff;
     --text: #101114;
     --muted: #5b606a;
     --faint: #7b828f;
-  
-    /* Accent + borders */
     --accent: #5b7cfa;
     --accent2: #9a6bff;
     --border: rgba(16,17,20,.10);
     --border2: rgba(16,17,20,.14);
-  
-    /* Shadows + radii */
     --shadow: 0 18px 40px rgba(18,18,22,.10);
     --shadow2: 0 8px 22px rgba(18,18,22,.08);
     --radius: 20px;
     --radius2: 16px;
-  
     --max: 920px;
   }
   
@@ -31,8 +25,6 @@
     color: var(--text);
     font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.65;
-  
-    /* Aesthetic bright background – single cover, no tiling */
     background:
       radial-gradient(120vmax 70vmax at 20% -10%, rgba(91,124,250,.18), transparent 60%),
       radial-gradient(90vmax 52vmax at 90% 10%, rgba(154,107,255,.16), transparent 55%),
@@ -209,7 +201,6 @@
   ul, ol{ margin: 10px 0 0; padding-left: 22px; }
   li{ margin: 6px 0; }
   
-  /* Multi-line code blocks */
 pre{
     margin: 16px 0 0;
     padding: 16px 18px;
@@ -217,7 +208,7 @@ pre{
     border: 1px solid var(--border);
     background: rgba(255,255,255,.75);
     box-shadow: var(--shadow2);
-    overflow-x: auto;        /* allows long lines to scroll */
+    overflow-x: auto;
     overflow-y: hidden;
     line-height: 1.55;
   }
@@ -225,14 +216,13 @@ pre{
   pre code{
     font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 13px;
-    white-space: pre;        /* preserves indentation + line breaks */
+    white-space: pre;
     display: block;
     background: none;
     border: 0;
     padding: 0;
   }
   
-  /* Inline code stays compact */
   code{
     font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: .95em;
@@ -242,9 +232,8 @@ pre{
     border: 1px solid rgba(16,17,20,.08);
   }
   
-  /* Optional: slightly larger blocks for readability */
   .code{
-    padding: 0;              /* let <pre> control spacing */
+    padding: 0;        
     background: transparent;
     border: 0;
     box-shadow: none;

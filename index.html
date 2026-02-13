@@ -7,7 +7,6 @@
   <title>Reproduction: Toy Models of Superposition</title>
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -59,7 +58,7 @@
             </ul>
             <br>
             The solution to these problems is 'superposition'. Features could be embedded in almost-orthogonal bases in the dense activation vector. But why? A corollary from the <a href="https://en.wikipedia.org/wiki/Johnson–Lindenstrauss_lemma">Johnson-Lindenstrauss lemma</a> states that the number of representable almost-orthogonal vectors scales exponentially with the size of the vector space.
-            This is a very powerful statement, since it gives a mathematical account for how a transformer model could in theory represent exponentially more features than its residual stream has activations.
+            This is a very powerful statement, since it gives a mathematical account for how a transformer model could in theory represent exponentially more features than its residual stream has dimensions.
             An important caveat is interference. Since features are represented almost-orthogonally, they are no longer independent. One feature's representation can 'leak' into another's.
             In practice, however, a language model does not represent all features its capable of at once. Features or concepts occur sparsely. The toy model approach shows that sparsity constraints (how likely is some feature to occur) are what determines if superposition can occur.
         </p>
